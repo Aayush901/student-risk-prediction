@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Risk Prediction</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Student Performance Prediction</h1>
+        <p>Predict academic risk based on attendance, marks, and assignments</p>
+
+        <form id="predictForm">
+            <div class="input-group">
+                <label for="attendance">Attendance</label>
+                <select id="attendance" required>
+                    <option disabled selected value="">Select Attendance</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="marks">Internal Marks</label>
+                <select id="marks" required>
+                    <option disabled selected value="">Select Internal Marks</option>
+                    <option value="Good">Good</option>
+                    <option value="Average">Average</option>
+                    <option value="Poor">Poor</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="assignment">Assignment Submitted?</label>
+                <select id="assignment" required>
+                    <option disabled selected value="">Select Option</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+
+            <button type="submit">Predict Risk</button>
+        </form>
+
+        <div id="result" class="result-box"></div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
