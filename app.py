@@ -1,60 +1,49 @@
-from flask import Flask, render_template, request, jsonify
-import pandas as pd
-from sklearn.naive_bayes import GaussianNB
-from sklearn.preprocessing import LabelEncoder
+from flask import Flask, render_template, request
+import pickle
+import os
 
 app = Flask(__name__)
 
-# ---------- DATA ----------
-data = {
-    'Attendance': ['High','Low','Medium','High','Low','Medium','High','Medium','Low','High'],
-    'Internal_Marks': ['Good','Poor','Average','Good','Poor','Average','Good','Good','Poor','Average'],
-    'Assignment_Submission': ['Yes','No','Yes','Yes','No','Yes','Yes','Yes','No','Yes'],
-    'Result': ['Low Risk','High Risk','Medium Risk','Low Risk','High Risk',
-               'Medium Risk','Low Risk','Low Risk','High Risk','Medium Risk']
-}
+# Load your pre-trained model
+MODEL_PATH = 'student_risk_model.pkl'
+if os.path.exists(MODEL_PATH):
+    model = pickle.load(open(MODEL_PATH, 'rb'))
+else:
+    model = None  # For testing without model
 
-df = pd.DataFrame(data)
-
-le_att = LabelEncoder()
-le_marks = LabelEncoder()
-le_assign = LabelEncoder()
-le_result = LabelEncoder()
-
-df['Attendance'] = le_att.fit_transform(df['Attendance'])
-df['Internal_Marks'] = le_marks.fit_transform(df['Internal_Marks'])
-df['Assignment_Submission'] = le_assign.fit_transform(df['Assignment_Submission'])
-df['Result'] = le_result.fit_transform(df['Result'])
-
-X = df[['Attendance', 'Internal_Marks', 'Assignment_Submission']]
-y = df['Result']
-
-model = GaussianNB()
-model.fit(X, y)
-
-# ---------- ROUTES ----------
-@app.route("/")
+@app.route('/')
 def home():
-    return render_template("index.html")
+    return render_template('index.html')
 
-@app.route("/predict", methods=["POST"])
+@app.route('/predict', methods=['POST'])
 def predict():
-    data = request.get_json()
+    # Safely get form values
+    att = request.form.get('attendance', None)
+    marks = request.form.get('marks', None)
+    assign = request.form.get('assignment', None)
 
-    att = le_att.transform([data["attendance"]])[0]
-    marks = le_marks.transform([data["internal_marks"]])[0]
-    assign = le_assign.transform([data["assignment"]])[0]
+    if None in [att, marks, assign]:
+        return "Form data missing! Check input fields.", 400
 
-    prediction = model.predict([[att, marks, assign]])[0]
+    # Convert categorical to numeric (example mapping)
+    att_map = {'High': 2, 'Medium': 1, 'Low': 0}
+    marks_map = {'Good': 2, 'Average': 1, 'Poor': 0}
+    assign_map = {'Yes': 1, 'No': 0}
 
-    if prediction == 0:
-        result = "HIGH RISK"
-    elif prediction == 1:
-        result = "LOW RISK"
+    input_features = [
+        att_map.get(att, 0),
+        marks_map.get(marks, 0),
+        assign_map.get(assign, 0)
+    ]
+
+    # Make prediction
+    if model:
+        prediction = model.predict([input_features])[0]
     else:
-        result = "MEDIUM RISK"
+        prediction = "High Risk"  # Dummy for testing
 
-    return jsonify({"result": result})
+    return render_template('index.html', prediction_text=f"Student Risk: {prediction}")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))  # Render requires PORT variable
+    app.run(host='0.0.0.0', port=port, debug=True)
